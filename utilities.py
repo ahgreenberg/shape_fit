@@ -25,7 +25,7 @@ def generate_gaussian_model(num_voxel, num_mode,
         std = std_max * (2*tc.rand((1,))-1)
         space += mode_func(mu, std)
 
-    return space > thresh
+    return (space>thresh).to(dtype=tc.float)
 
 def rotate_model(model, axis, angle):
     # apply a continuous rotation to a voxel model
@@ -74,9 +74,10 @@ def loss_function(images, model, axis, angles):
         
     # initialize loss with continuous penalty function for non-physical 
     # occupancy values (basically just a reciprocal super-gaussian)
-    loss = tc.sum( tc.exp(((model-0.5)/0.7)**4)-1 )/1E3
+    center,width = 0.5,0.5
+    loss = tc.sum( tc.exp(((model-center)/width/1.5)**4)-1 )/1E3
     
-    # compute loss as sum-squared residuals between simulated and measured images
+    # loss is sum-squared residuals between synthetic and measured images
     for angle,image in zip(angles, images):
         image_sim = observe_model(rotate_model(model, axis, angle))
         loss += tc.sum((image-image_sim)**2)
