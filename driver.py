@@ -5,10 +5,13 @@ Created on Thu Dec 26 22:26:39 2024
 
 @author: adamgreenberg
 """
+import sys
+sys.path.append('./src/')
 
 import torch as tc
 import utilities as utl
 import time as tm
+import plotter as plt
 tc.manual_seed(1)
 
 # define truth model
@@ -19,7 +22,7 @@ truth_model = utl.generate_gaussian_model(num_voxel, num_mode)
 # define observational parameters
 angles = tc.linspace(0,tc.pi,10)
 axis = tc.Tensor([0,0,1])
-noise = 0.01
+noise = 0.05
 
 # simulate measurements - 4E5 total pixels
 images = [utl.observe_model(utl.rotate_model(truth_model, axis, angle), noise) \
@@ -38,18 +41,6 @@ for k in range(num_epoch):
     print(f"Iteration: {k:3.0f}, Loss: {loss.item():8.1f}")
 print(f"Total time: {tm.time()-tic:.1f} s")
 
-# compare truth model with recovered model
-random_axis = tc.rand((3,))
-import matplotlib.pyplot as plt
-for angle in tc.linspace(0.05, tc.pi+0.05, 30):
-    args = [random_axis, angle]
-    img       = utl.observe_model(utl.rotate_model(cand_model,  *args))
-    img_truth = utl.observe_model(utl.rotate_model(truth_model, *args))
-    
-    plt.figure(1), plt.clf()
-    plt.subplot(1,2,1)
-    plt.imshow(img.detach().numpy())
-    plt.subplot(1,2,2)
-    plt.imshow(img_truth.detach().numpy())
-    plt.pause(0.1)
+outfile = 'outputs/comparison.png'
+plt.show_comparison(images, cand_model, axis, angles, outfile)
 
