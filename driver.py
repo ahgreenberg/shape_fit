@@ -39,8 +39,9 @@ for k in range(num_epoch):
     loss.backward()
     optimizer.step()
     print(f"Iteration: {k:3.0f}, Loss: {loss.item():8.1f}")
+
+cand_model.detach_().round_()
 print(f"Total time: {tm.time()-tic:.1f} s")
 
 outfile = 'outputs/comparison.png'
 plt.show_comparison(images, cand_model, axis, angles, outfile)
-
