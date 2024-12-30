@@ -14,24 +14,38 @@ import time as tm
 import plotter as plt
 tc.manual_seed(1)
 
+# figure out if GPU is available
+if tc.cuda.is_available():
+    print("I found a GPU.")
+    device = "cuda:0"
+else:
+    print("I did not find a GPU.")
+    device = "cpu"
+
+
 # define truth model
 num_voxel = 200
 num_mode = 30
 truth_model = utl.generate_gaussian_model(num_voxel, num_mode)
+truth_model.to(device)
 
 # define observational parameters
 angles = tc.linspace(0,tc.pi,10)
 axis = tc.Tensor([0,0,1])
+axis.to(device)
 noise = 0.05
 
 # simulate measurements - 4E5 total pixels
 images = [utl.observe_model(utl.rotate_model(truth_model, axis, angle), noise) \
           for angle in angles]
 
+
 # recover model via fit - 8E6 total free model parameters
 tic = tm.time()
 num_epoch = 75
 cand_model = tc.zeros((num_voxel,num_voxel,num_voxel), requires_grad=True)
+cand_model.to(device)
+
 optimizer = tc.optim.Adam([cand_model], lr=4E-2)
 for k in range(num_epoch):
     optimizer.zero_grad()
